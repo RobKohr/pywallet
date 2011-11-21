@@ -51,7 +51,7 @@ from datetime import datetime
 from subprocess import *
 
 
-max_version = 32500
+max_version = 41000
 addrtype = 0
 json_db = {}
 private_keys = []
@@ -1202,6 +1202,7 @@ def read_wallet(json_db, db_env, walletfile, print_wallet, print_wallet_transact
 
 
 def importprivkey(db, sec, label, reserve, keyishex):
+	print sec
 	if keyishex is None:
 		pkey = regenerate_key(sec)
 	elif len(sec) == 64:
@@ -1829,6 +1830,9 @@ if __name__ == '__main__':
 	parser.add_option("--importprivkey", dest="key", 
 		help="import private key from vanitygen")
 
+	parser.add_option("--importprivkeyfile", dest="privkeyfile", 
+		help="import private keys from a file (one key on each line)")
+
 	parser.add_option("--importhex", dest="keyishex", action="store_true", 
 		help="KEY is in hexadecimal format")
 
@@ -1971,7 +1975,7 @@ if __name__ == '__main__':
 		print(balance(balance_site, options.key_balance))
 		exit(0)
 
-	if options.dump is None and options.key is None:
+	if options.dump is None and options.key is None and options.privkeyfile is None:
 		print "A mandatory option is missing\n"
 		parser.print_help()
 		exit(0)
@@ -2003,21 +2007,29 @@ if __name__ == '__main__':
 
 	if options.dump:		
 		print json.dumps(json_db, sort_keys=True, indent=4)
-	elif options.key:
-		if json_db['version'] > max_version:
-			print "Version mismatch (must be <= %d)" % max_version
-		elif (options.keyishex is None and options.key in private_keys) or (options.keyishex is not None and options.key in private_hex_keys):
-			print "Already exists"
-		else:	
-			db = open_wallet(db_env, determine_db_name(), writable=True)
+		exit(0)
 
-			if importprivkey(db, options.key, options.label, options.reserve, options.keyishex):
+	if json_db['version'] > max_version:
+		print "Version mismatch (must be <= %d)" % max_version
+		exit(0)
+
+	if options.key:
+		options.keys = [key]
+		
+	if options.privkeyfile:
+		db = open_wallet(db_env, determine_db_name(), writable=True)
+		options.keys = open(options.privkeyfile, "r").read().splitlines();
+	
+	if options.keys is not None and type(options.keys)==list and len(options.keys) > 0:
+		db = open_wallet(db_env, determine_db_name(), writable=True)
+		for key in options.keys: 
+			if (options.keyishex is None and key in private_keys) or (options.keyishex is not None and key in private_hex_keys):
+				print "Already exists"
+			if importprivkey(db, key, options.label, options.reserve, options.keyishex):
 				print "Imported successfully"
 			else:
 				print "Bad private key"
-
-			db.close()
-
+		db.close()
 
 
 
