@@ -1202,7 +1202,6 @@ def read_wallet(json_db, db_env, walletfile, print_wallet, print_wallet_transact
 
 
 def importprivkey(db, sec, label, reserve, keyishex):
-	print sec
 	if keyishex is None:
 		pkey = regenerate_key(sec)
 	elif len(sec) == 64:
@@ -2009,10 +2008,6 @@ if __name__ == '__main__':
 		print json.dumps(json_db, sort_keys=True, indent=4)
 		exit(0)
 
-	if json_db['version'] > max_version:
-		print "Version mismatch (must be <= %d)" % max_version
-		exit(0)
-
 	if options.key:
 		options.keys = [key]
 		
@@ -2021,6 +2016,9 @@ if __name__ == '__main__':
 		options.keys = open(options.privkeyfile, "r").read().splitlines();
 	
 	if options.keys is not None and type(options.keys)==list and len(options.keys) > 0:
+		if json_db['version'] > max_version:
+			print "Version mismatch (must be <= %d)" % max_version
+			exit(0)
 		db = open_wallet(db_env, determine_db_name(), writable=True)
 		for key in options.keys: 
 			if (options.keyishex is None and key in private_keys) or (options.keyishex is not None and key in private_hex_keys):
