@@ -51,7 +51,7 @@ from datetime import datetime
 from subprocess import *
 
 
-max_version = 41000
+max_version = 61000
 addrtype = 0
 json_db = {}
 private_keys = []
